@@ -49,7 +49,7 @@ import {
   signupWithEmail
 } from './lib/firebaseUtils';
 
-const AdminPortal = () => {
+const AdminPortal = ({ user, isAdmin }: { user: FirebaseUser | null, isAdmin: boolean }) => {
   const [isAddingBooking, setIsAddingBooking] = useState(false);
   const [newBooking, setNewBooking] = useState({
     name: '',
@@ -87,21 +87,6 @@ const AdminPortal = () => {
 
   const [bookings, setBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [authError, setAuthError] = useState('');
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user?.email === 'asimkhankhan3236@gmail.com') {
-        setIsAdminLoggedIn(true);
-      } else {
-        setIsAdminLoggedIn(false);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
 
   const fetchAll = async () => {
     setIsLoading(true);
@@ -116,26 +101,10 @@ const AdminPortal = () => {
   };
 
   useEffect(() => {
-    if (isAdminLoggedIn) {
+    if (isAdmin) {
       fetchAll();
     }
-  }, [isAdminLoggedIn]);
-
-  const handleAdminLogin = async (e: FormEvent) => {
-    e.preventDefault();
-    setAuthError('');
-    try {
-      await loginWithEmail(email, password);
-      if (auth.currentUser?.email === 'asimkhankhan3236@gmail.com') {
-        setIsAdminLoggedIn(true);
-      } else {
-        setAuthError('Unauthorized access.');
-        await auth.signOut();
-      }
-    } catch (err: any) {
-      setAuthError('Invalid credentials.');
-    }
-  };
+  }, [isAdmin]);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
@@ -146,52 +115,20 @@ const AdminPortal = () => {
     }
   };
 
-  if (!isAdminLoggedIn) {
+  if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full bg-white p-12 shadow-2xl"
-        >
-          <div className="text-center mb-10">
-            <div className="w-16 h-16 border-2 border-brand-teal text-brand-teal flex items-center justify-center font-display text-4xl italic mx-auto mb-6">D</div>
-            <h2 className="font-display text-3xl text-slate-900 tracking-tight">Admin Portal</h2>
-            <p className="text-slate-400 text-xs uppercase tracking-widest mt-2 font-bold">Authorized Personnel Only</p>
-          </div>
-
-          <form onSubmit={handleAdminLogin} className="space-y-6">
-            <div>
-              <label className="block text-[10px] uppercase tracking-widest font-bold text-slate-500 mb-2">Admin Email</label>
-              <input 
-                type="email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-50 border-0 p-4 text-sm focus:ring-1 focus:ring-brand-teal outline-none" 
-                required 
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] uppercase tracking-widest font-bold text-slate-500 mb-2">Security Password</label>
-              <input 
-                type="password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50 border-0 p-4 text-sm focus:ring-1 focus:ring-brand-teal outline-none" 
-                required 
-              />
-            </div>
-            {authError && <p className="text-red-500 text-[10px] uppercase font-bold tracking-widest">{authError}</p>}
-            <button className="w-full bg-brand-teal text-white py-5 text-xs uppercase tracking-[0.4em] font-black hover:bg-slate-900 transition-all shadow-xl shadow-brand-teal/10"> Authenticate </button>
-            <button 
-              type="button"
-              onClick={() => window.location.hash = ''}
-              className="w-full text-center text-[10px] uppercase tracking-widest text-slate-400 font-bold hover:text-brand-teal"
-            >
-              Return to Website
-            </button>
-          </form>
-        </motion.div>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
+        <div className="text-center">
+          <div className="w-16 h-16 border-2 border-brand-teal text-brand-teal flex items-center justify-center font-display text-4xl italic mx-auto mb-6">D</div>
+          <h2 className="font-display text-3xl text-slate-900 mb-2">Access Denied</h2>
+          <p className="text-slate-400 text-xs uppercase tracking-widest font-bold">Authorized Personnel Only</p>
+          <button 
+            onClick={() => window.location.hash = ''} 
+            className="mt-8 text-brand-teal font-black text-[10px] uppercase tracking-widest border-b border-brand-teal"
+          >
+            Back to Home
+          </button>
+        </div>
       </div>
     );
   }
@@ -206,7 +143,7 @@ const AdminPortal = () => {
         <div className="flex items-center gap-6">
           <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">{auth.currentUser?.email}</span>
           <button 
-            onClick={() => { auth.signOut(); setIsAdminLoggedIn(false); }}
+            onClick={() => { auth.signOut(); }}
             className="text-[10px] uppercase tracking-widest font-bold text-red-500 hover:text-red-600 flex items-center gap-2"
           >
            <LogOut className="w-3 h-3" /> Sign Out
@@ -438,14 +375,28 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: (
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
+    setError('');
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      // Ensure specific domain hints or scopes if needed
+      provider.addScope('profile');
+      provider.addScope('email');
+      
+      console.log('Attempting Google Login...');
+      const result = await signInWithPopup(auth, provider);
+      console.log('Google Login Success:', result.user.email);
+      
       onSuccess?.('login');
       onClose();
     } catch (err: any) {
-      console.error(err);
-      setError(err.message);
+      console.error('Google Login Error:', err);
+      if (err.code === 'auth/popup-blocked') {
+        setError('Login popup was blocked. Please enable popups or try again.');
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        // User closed the popup, don't show error
+      } else {
+        setError(`Google login failed: ${err.message}`);
+      }
     }
   };
 
@@ -485,7 +436,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: (
             initial={{ scale: 0.95, opacity: 0, y: 10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 10 }}
-            className="bg-white w-full max-w-[320px] max-h-[85vh] flex flex-col shadow-2xl relative rounded-3xl overflow-hidden"
+            className="bg-white w-full max-w-[300px] max-h-[75vh] flex flex-col shadow-2xl relative rounded-3xl overflow-hidden"
           >
             {/* Header */}
             <div className="p-4 border-b border-slate-50 flex items-center justify-between bg-white z-10">
@@ -650,7 +601,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: (
   );
 };
 
-const Navbar = ({ user, onSignInClick }: { user: FirebaseUser | null, onSignInClick: () => void }) => {
+const Navbar = ({ user, onSignInClick, isAdmin }: { user: FirebaseUser | null, onSignInClick: () => void, isAdmin: boolean }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -680,6 +631,10 @@ const Navbar = ({ user, onSignInClick }: { user: FirebaseUser | null, onSignInCl
 
   if (user) {
     navLinks.splice(0, 0, { name: 'My Bookings', href: '#my-bookings' });
+  }
+
+  if (isAdmin) {
+    navLinks.splice(0, 0, { name: 'Admin Portal', href: '#admin' });
   }
 
   return (
@@ -1852,6 +1807,8 @@ export default function App() {
   const [activeView, setActiveView] = useState<'home' | 'bookings' | 'admin'>('home');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
+  const isAdmin = user?.email === 'asimkhankhan3236@gmail.com' || user?.email === 'asimkhankhan5464@gmail.com';
+
   useEffect(() => {
     testConnection();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -1890,10 +1847,6 @@ export default function App() {
     );
   }
 
-  if (activeView === 'admin') {
-    return <AdminPortal />;
-  }
-
   return (
     <main className="font-sans text-slate-900 bg-white">
       <AuthModal 
@@ -1906,10 +1859,20 @@ export default function App() {
           }
         }}
       />
-      <Navbar user={user} onSignInClick={() => setIsAuthModalOpen(true)} />
+      <Navbar user={user} onSignInClick={() => setIsAuthModalOpen(true)} isAdmin={isAdmin} />
       
       <AnimatePresence mode="wait">
-        {activeView === 'home' ? (
+        {activeView === 'admin' ? (
+           <motion.div
+            key="admin"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <AdminPortal user={user} isAdmin={isAdmin} />
+          </motion.div>
+        ) : activeView === 'home' ? (
           <motion.div
             key="home"
             initial={{ opacity: 0 }}
