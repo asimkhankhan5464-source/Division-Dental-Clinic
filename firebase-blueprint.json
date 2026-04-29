@@ -1,0 +1,41 @@
+{
+  "entities": {
+    "Booking": {
+      "title": "Booking",
+      "description": "Represents an appointment booking",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user who booked" },
+        "userEmail": { "type": "string", "description": "The email of the user who booked" },
+        "fullName": { "type": "string", "description": "Patient's full name" },
+        "phoneNumber": { "type": "string", "description": "Patient's contact number" },
+        "service": { "type": "string", "description": "Type of service requested" },
+        "date": { "type": "string", "format": "date", "description": "Preferred appointment date" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp of creation" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"] }
+      },
+      "required": ["userId", "userEmail", "fullName", "phoneNumber", "service", "date"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile data",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Collection of all appointment bookings"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of user profiles"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Division Dental Clinic",
+  "description": "Premium dental studio website with Google-powered patient profiles and secure appointment booking. Built for Division Dental Clinic in Chicago.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}
