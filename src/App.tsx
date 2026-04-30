@@ -543,10 +543,10 @@ const Navbar = ({ user, isAdmin, onSignInClick }: { user: FirebaseUser | null, i
     <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'py-4 bg-white shadow-sm' : 'py-6 bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-4 md:px-8 flex justify-between items-center">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <div className={`w-8 h-8 border flex items-center justify-center font-display text-xl italic transition-all ${isScrolled ? 'border-brand-teal text-brand-teal' : 'border-slate-800 text-slate-800 md:border-white/20 md:text-white'}`}>
+          <div className={`w-8 h-8 border flex items-center justify-center font-display text-xl italic transition-all ${isScrolled ? 'border-brand-teal text-brand-teal' : 'border-brand-teal text-brand-teal'}`}>
             D
           </div>
-          <p className={`font-display text-xl tracking-tight leading-none transition-colors ${isScrolled ? 'text-slate-900' : 'text-slate-900 md:text-white'}`}>
+          <p className={`font-display text-xl tracking-tight leading-none transition-colors ${isScrolled ? 'text-slate-900' : 'text-slate-900'}`}>
             Division <span className="italic text-brand-accent">Dental</span>
           </p>
         </div>
@@ -557,7 +557,7 @@ const Navbar = ({ user, isAdmin, onSignInClick }: { user: FirebaseUser | null, i
             <a 
               key={item.name}
               href={item.href} 
-              className={`text-[11px] uppercase font-bold tracking-widest transition-all hover:text-brand-accent ${isScrolled ? 'text-slate-600' : 'text-slate-900 md:text-white'}`}
+              className={`text-[11px] uppercase font-bold tracking-widest transition-all hover:text-brand-accent ${isScrolled ? 'text-slate-600' : 'text-slate-900'}`}
             >
               {item.name}
             </a>
@@ -566,7 +566,7 @@ const Navbar = ({ user, isAdmin, onSignInClick }: { user: FirebaseUser | null, i
           <div className="flex items-center gap-6 ml-4">
             {user ? (
                <div className="flex items-center gap-6">
-                  <a href="#my-bookings" className={`text-[11px] uppercase tracking-widest font-bold hover:text-brand-accent transition-colors ${isScrolled ? 'text-slate-600' : 'text-slate-900 md:text-white'}`}>
+                  <a href="#my-bookings" className={`text-[11px] uppercase tracking-widest font-bold hover:text-brand-accent transition-colors ${isScrolled ? 'text-slate-600' : 'text-slate-900'}`}>
                      My Dashboard
                   </a>
                   <button 
@@ -579,7 +579,7 @@ const Navbar = ({ user, isAdmin, onSignInClick }: { user: FirebaseUser | null, i
             ) : (
               <button 
                 onClick={onSignInClick}
-                className={`text-[11px] uppercase tracking-[0.2em] font-bold px-8 py-4 transition-all ${isScrolled ? 'bg-slate-900 text-white hover:bg-brand-teal' : 'bg-white text-slate-900 hover:bg-brand-accent'}`}
+                className={`text-[11px] uppercase tracking-[0.2em] font-bold px-8 py-4 rounded-xl transition-all ${isScrolled ? 'bg-slate-900 text-white hover:bg-brand-teal' : 'bg-brand-teal text-white hover:bg-slate-900'}`}
               >
                 Sign In
               </button>
@@ -590,7 +590,7 @@ const Navbar = ({ user, isAdmin, onSignInClick }: { user: FirebaseUser | null, i
         {/* Mobile Toggle */}
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-          className={`lg:hidden p-3 rounded-xl ${isScrolled ? 'text-slate-900 bg-slate-50' : 'text-slate-900 bg-white/10 md:text-white'}`}
+          className={`lg:hidden p-3 rounded-xl ${isScrolled ? 'text-slate-900 bg-slate-50' : 'text-brand-teal bg-white/10'}`}
           aria-label="Menu"
         >
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
