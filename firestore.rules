@@ -13,15 +13,17 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(uid) {
-      return isSignedIn() && request.auth.uid == uid;
-    }
-
     function isAdmin() {
       return isSignedIn() && (
         request.auth.token.email == "asimkhankhan3236@gmail.com" ||
-        request.auth.token.email == "asimkhankhan5464@gmail.com" ||
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        request.auth.token.email == "asimkhankhan5464@gmail.com"
+      );
+    }
+
+    function isOwner(resourceData) {
+      return isSignedIn() && (
+        resourceData.userId == request.auth.uid || 
+        resourceData.userEmail == request.auth.token.email
       );
     }
 
@@ -29,20 +31,25 @@ service cloud.firestore {
 
     // 1. Users Profile
     match /users/{uid} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(uid) || isAdmin();
+      allow read, write: if isSignedIn();
     }
 
     // 2. Patient Bookings
     match /bookings/{bookingId} {
-      // Create a record
-      allow create: if isSignedIn() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      function isValidBooking(data) {
+        return data.fullName is string && 
+               data.phoneNumber is string && 
+               data.date is string && 
+               data.time is string;
+      }
+
+      allow create: if isSignedIn() && 
+                      (request.resource.data.userId == request.auth.uid || isAdmin()) &&
+                      isValidBooking(request.resource.data);
       
-      // List/Get records
-      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      
-      // Manage records
-      allow update, delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (isOwner(resource.data) || isAdmin());
+      allow get: if isSignedIn() && (isOwner(resource.data) || isAdmin());
+      allow update, delete: if isSignedIn() && (isOwner(resource.data) || isAdmin());
     }
 
     // 3. System Connection

@@ -102,6 +102,7 @@ export const syncUserProfile = async (user: FirebaseUser) => {
     }
     
     const data = {
+      uid: user.uid,
       email: user.email,
       displayName: user.displayName,
       updatedAt: serverTimestamp(),
@@ -133,6 +134,17 @@ export const testFirestoreConnection = async () => {
   } catch (error) {
     console.error('Firestore connection: FAILED', error);
     return false;
+  }
+};
+
+export const getBookingsByDate = async (date: string) => {
+  const path = 'bookings';
+  try {
+    const q = query(collection(db, path), where('date', '==', date));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
   }
 };
 

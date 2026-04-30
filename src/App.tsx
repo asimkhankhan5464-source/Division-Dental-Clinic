@@ -47,18 +47,19 @@ import {
   getAllBookings,
   updateBookingStatus,
   loginWithEmail,
-  signupWithEmail
+  signupWithEmail,
+  getBookingsByDate
 } from './lib/firebaseUtils';
 
 const AdminPortal = ({ user, isAdmin }: { user: FirebaseUser | null, isAdmin: boolean }) => {
   const [isAddingBooking, setIsAddingBooking] = useState(false);
   const [newBooking, setNewBooking] = useState({
-    name: '',
-    phone: '',
-    email: '',
+    fullName: '',
+    phoneNumber: '',
+    userEmail: '',
     service: 'General Consultation',
-    appointmentDate: '',
-    timeSlot: '09:00 AM',
+    date: '',
+    time: '09:00 AM',
     notes: ''
   });
 
@@ -88,17 +89,16 @@ const AdminPortal = ({ user, isAdmin }: { user: FirebaseUser | null, isAdmin: bo
     try {
       await createBooking({
         ...newBooking,
-        userEmail: newBooking.email,
         status: 'confirmed'
       });
       setIsAddingBooking(false);
       setNewBooking({
-        name: '',
-        phone: '',
-        email: '',
+        fullName: '',
+        phoneNumber: '',
+        userEmail: '',
         service: 'General Consultation',
-        appointmentDate: '',
-        timeSlot: '09:00 AM',
+        date: '',
+        time: '09:00 AM',
         notes: ''
       });
       await fetchAll();
@@ -110,8 +110,9 @@ const AdminPortal = ({ user, isAdmin }: { user: FirebaseUser | null, isAdmin: bo
   const handleStatusChange = async (id: string, newStatus: string) => {
     try {
       await updateBookingStatus(id, newStatus);
-      await fetchAll();
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b));
     } catch (err) {
+      console.error(err);
       alert('Failed to update status');
     }
   };
@@ -198,24 +199,25 @@ const AdminPortal = ({ user, isAdmin }: { user: FirebaseUser | null, isAdmin: bo
                   {bookings.map((booking) => (
                     <tr key={booking.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-6 min-w-[200px]">
-                        <div className="font-semibold text-slate-900">{booking.name}</div>
-                        <div className="text-[10px] text-slate-400 mt-1">{booking.userEmail}</div>
+                        <div className="font-semibold text-slate-900">{booking.fullName || booking.name}</div>
+                        <div className="text-[10px] text-slate-400 mt-1">{booking.userEmail || booking.email}</div>
                       </td>
                       <td className="px-6 py-6 text-center italic text-sm text-slate-600 min-w-[150px]">
                         {booking.service}
                       </td>
                       <td className="px-6 py-6 font-mono text-xs min-w-[180px]">
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-3 h-3 text-brand-teal" /> {booking.appointmentDate || 'TBD'}
+                          <Calendar className="w-3 h-3 text-brand-teal" /> {booking.date || booking.appointmentDate || 'TBD'}
                         </div>
                         <div className="flex items-center gap-2 mt-1 opacity-60">
-                          <Clock className="w-3 h-3" /> {booking.timeSlot}
+                          <Clock className="w-3 h-3" /> {booking.time || booking.timeSlot}
                         </div>
                       </td>
                       <td className="px-6 py-6 text-center">
                         <span className={`text-[8px] uppercase tracking-widest font-black px-3 py-1 rounded-full ${
                           booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
                           booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                          booking.status === 'cancelled' ? 'bg-red-100 text-red-700' :
                           'bg-slate-100 text-slate-700'
                         }`}>
                           {booking.status}
@@ -231,12 +233,14 @@ const AdminPortal = ({ user, isAdmin }: { user: FirebaseUser | null, isAdmin: bo
                               Approve
                             </button>
                           )}
-                          <button 
-                            onClick={() => handleStatusChange(booking.id, 'cancelled')}
-                            className="border border-red-100 text-red-500 px-4 py-2 hover:bg-red-500 hover:text-white transition-colors uppercase tracking-widest font-bold text-[9px]"
-                          >
-                            Cancel
-                          </button>
+                          {booking.status !== 'cancelled' && (
+                            <button 
+                              onClick={() => handleStatusChange(booking.id, 'cancelled')}
+                              className="border border-red-100 text-red-500 px-4 py-2 hover:bg-red-500 hover:text-white transition-colors uppercase tracking-widest font-bold text-[9px]"
+                            >
+                              Cancel
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -280,8 +284,8 @@ const AdminPortal = ({ user, isAdmin }: { user: FirebaseUser | null, isAdmin: bo
                   <input 
                     type="text" 
                     required
-                    value={newBooking.name}
-                    onChange={e => setNewBooking({...newBooking, name: e.target.value})}
+                    value={newBooking.fullName}
+                    onChange={e => setNewBooking({...newBooking, fullName: e.target.value})}
                     className="w-full bg-slate-50 border-slate-100 border p-4 text-sm rounded-xl focus:bg-white focus:border-brand-teal outline-none transition-all"
                   />
                 </div>
@@ -290,8 +294,8 @@ const AdminPortal = ({ user, isAdmin }: { user: FirebaseUser | null, isAdmin: bo
                   <input 
                     type="email" 
                     required
-                    value={newBooking.email}
-                    onChange={e => setNewBooking({...newBooking, email: e.target.value})}
+                    value={newBooking.userEmail}
+                    onChange={e => setNewBooking({...newBooking, userEmail: e.target.value})}
                     className="w-full bg-slate-50 border-slate-100 border p-4 text-sm rounded-xl focus:bg-white focus:border-brand-teal outline-none transition-all"
                   />
                 </div>
@@ -300,8 +304,8 @@ const AdminPortal = ({ user, isAdmin }: { user: FirebaseUser | null, isAdmin: bo
                   <input 
                     type="tel" 
                     required
-                    value={newBooking.phone}
-                    onChange={e => setNewBooking({...newBooking, phone: e.target.value})}
+                    value={newBooking.phoneNumber}
+                    onChange={e => setNewBooking({...newBooking, phoneNumber: e.target.value})}
                     className="w-full bg-slate-50 border-slate-100 border p-4 text-sm rounded-xl focus:bg-white focus:border-brand-teal outline-none transition-all"
                   />
                 </div>
@@ -313,9 +317,31 @@ const AdminPortal = ({ user, isAdmin }: { user: FirebaseUser | null, isAdmin: bo
                     className="w-full bg-slate-50 border-slate-100 border p-4 text-sm h-[54px] rounded-xl focus:bg-white focus:border-brand-teal outline-none transition-all"
                   >
                     <option>General Consultation</option>
-                    <option>Restorative Work</option>
+                    <option>Cleaning & Checkup</option>
                     <option>Cosmetic Treatment</option>
-                    <option>Urgent Care</option>
+                    <option>Emergency Care</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2 ml-1">Appointment Date</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={newBooking.date}
+                    onChange={e => setNewBooking({...newBooking, date: e.target.value})}
+                    className="w-full bg-slate-50 border-slate-100 border p-4 text-sm rounded-xl focus:bg-white focus:border-brand-teal outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2 ml-1">Time Slot</label>
+                  <select 
+                    value={newBooking.time}
+                    onChange={e => setNewBooking({...newBooking, time: e.target.value})}
+                    className="w-full bg-slate-50 border-slate-100 border p-4 text-sm h-[54px] rounded-xl focus:bg-white focus:border-brand-teal outline-none transition-all"
+                  >
+                    {['09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM'].map(t => (
+                      <option key={t}>{t}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="md:col-span-2 pt-4">
@@ -1018,15 +1044,63 @@ const BookingSection = ({ user, onBookingSuccess, onAuthRequired }: { user: Fire
     fullName: '',
     phoneNumber: '',
     service: 'General Consultation',
-    date: ''
+    date: '',
+    time: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [occupiedSlots, setOccupiedSlots] = useState<string[]>([]);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+
+  const businessHours = [
+    '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', 
+    '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM'
+  ];
+
+  useEffect(() => {
+    const fetchOccupiedSlots = async () => {
+      if (!formData.date) {
+        setOccupiedSlots([]);
+        return;
+      }
+
+      setIsLoadingSlots(true);
+      try {
+        const bookingsOnDate = await getBookingsByDate(formData.date);
+        const times = (bookingsOnDate || []).map((b: any) => b.time);
+        setOccupiedSlots(times);
+      } catch (err) {
+        console.error('Error fetching slots:', err);
+      } finally {
+        setIsLoadingSlots(false);
+      }
+    };
+
+    fetchOccupiedSlots();
+  }, [formData.date]);
+
+  const isSunday = (dateStr: string) => {
+    if (!dateStr) return false;
+    const date = new Date(dateStr);
+    return date.getUTCDay() === 0; // Using UTC to avoid timezone shifts
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    
+    if (isSunday(formData.date)) {
+      setSubmitStatus('error');
+      setErrorMessage('We are closed on Sundays. Please select another date.');
+      return;
+    }
+
+    if (!formData.time) {
+      setSubmitStatus('error');
+      setErrorMessage('Please select a preferred time slot.');
+      return;
+    }
     
     setIsSubmitting(true);
     setSubmitStatus('idle');
@@ -1039,13 +1113,15 @@ const BookingSection = ({ user, onBookingSuccess, onAuthRequired }: { user: Fire
         fullName: '',
         phoneNumber: '',
         service: 'General Consultation',
-        date: ''
+        date: '',
+        time: ''
       });
+      setOccupiedSlots([]);
       
       if (onBookingSuccess) {
         setTimeout(() => {
           onBookingSuccess();
-        }, 1500);
+        }, 3000);
       }
     } catch (error: any) {
       console.error('Booking error:', error);
@@ -1149,11 +1225,45 @@ const BookingSection = ({ user, onBookingSuccess, onAuthRequired }: { user: Fire
                     <input 
                       type="date" 
                       required
+                      min={new Date().toISOString().split('T')[0]}
                       value={formData.date}
-                      onChange={(e) => setFormData({...formData, date: e.target.value})}
+                      onChange={(e) => setFormData({...formData, date: e.target.value, time: ''})}
                       className="w-full bg-white/10 border-white/20 border p-4 text-white rounded-2xl focus:bg-white/20 focus:border-white outline-none transition-all" 
                     />
+                    {isSunday(formData.date) && (
+                      <p className="text-[10px] text-red-300 mt-2 ml-1 font-bold italic">Closed on Sundays</p>
+                    )}
                   </div>
+                </div>
+
+                <div className="space-y-4">
+                  <label className="block text-[10px] uppercase font-bold tracking-widest text-white/60 ml-1">Available Hourly Slots (9 AM - 5 PM)</label>
+                  <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+                    {businessHours.map((time) => {
+                      const isOccupied = occupiedSlots.includes(time);
+                      const isSelected = formData.time === time;
+                      return (
+                        <button
+                          key={time}
+                          type="button"
+                          disabled={isOccupied || isLoadingSlots || !formData.date || isSunday(formData.date)}
+                          onClick={() => setFormData({...formData, time})}
+                          className={`py-3 rounded-xl text-[10px] font-bold transition-all border ${
+                            isSelected 
+                              ? 'bg-white text-brand-teal border-white shadow-lg scale-105' 
+                              : isOccupied 
+                                ? 'bg-white/5 text-white/20 border-white/5 cursor-not-allowed'
+                                : 'bg-white/10 text-white border-white/10 hover:bg-white/20 hover:border-white/40'
+                          }`}
+                        >
+                          {isOccupied ? 'Booked' : time}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {formData.date && !isSunday(formData.date) && occupiedSlots.length === businessHours.length && (
+                    <p className="text-center text-[10px] text-red-300 font-bold uppercase tracking-widest">No slots available for this day.</p>
+                  )}
                 </div>
                 
                 <button 
@@ -1202,9 +1312,8 @@ const Contact = () => {
               <div>
                 <p className="font-bold text-slate-900 text-lg">Working Hours</p>
                 <div className="text-slate-600">
-                  <p>Mon - Fri: 8:00 AM - 7:00 PM</p>
-                  <p>Saturday: 9:00 AM - 3:00 PM</p>
-                  <p>Sunday: Closed (Emergency only)</p>
+                  <p>Mon - Sat: 9:00 AM - 5:00 PM</p>
+                  <p>Sunday: Closed</p>
                 </div>
               </div>
             </div>
@@ -1352,14 +1461,18 @@ const UserBookings = ({ user }: { user: FirebaseUser | null }) => {
   }, [user]);
 
   const handleCancel = async (id: string) => {
-    if (!confirm('Are you sure you want to cancel this appointment? This action cannot be undone.')) return;
+    if (!confirm('Are you sure you want to cancel this appointment?')) return;
     
+    const previousBookings = [...bookings];
+    // Optimistic update: mark as cancelled instantly in UI
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'cancelled' } : b));
     setIsCancelling(id);
+    
     try {
-      await cancelBooking(id);
-      await fetch();
+      await updateBookingStatus(id, 'cancelled');
     } catch (err: any) {
       console.error('handleCancel error', err);
+      setBookings(previousBookings); // Revert UI if server fails
       alert('Failed to cancel appointment. Please try again.');
     } finally {
       setIsCancelling(null);
@@ -1443,8 +1556,11 @@ const UserBookings = ({ user }: { user: FirebaseUser | null }) => {
                   <div className="flex items-center gap-4">
                     <Clock className="w-4 h-4 text-slate-300" />
                     <div>
-                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Requested Date</p>
-                      <p className="text-slate-700 font-medium">{new Date(booking.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Requested Date & Time</p>
+                      <p className="text-slate-700 font-medium">
+                        {new Date(booking.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
+                        <span className="text-brand-teal ml-2">@ {booking.time}</span>
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -1471,12 +1587,12 @@ const UserBookings = ({ user }: { user: FirebaseUser | null }) => {
                   onClick={() => handleCancel(booking.id)}
                   disabled={isCancelling === booking.id || booking.status === 'cancelled'}
                   className={`w-full py-4 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
-                    booking.status === 'cancelled'
-                    ? 'bg-slate-50 text-slate-300 cursor-not-allowed border border-slate-100'
-                    : 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white'
+                    booking.status === 'cancelled' 
+                      ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                      : 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white'
                   }`}
                 >
-                  {isCancelling === booking.id ? 'Processing...' : booking.status === 'cancelled' ? 'Request Cancelled' : 'Cancel Appointment'}
+                  {isCancelling === booking.id ? 'Processing...' : booking.status === 'cancelled' ? 'Cancelled' : 'Cancel Appointment'}
                 </button>
               </motion.div>
             ))}

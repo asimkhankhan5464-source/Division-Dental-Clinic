@@ -11,10 +11,11 @@
         "phoneNumber": { "type": "string", "description": "Patient's contact number" },
         "service": { "type": "string", "description": "Type of service requested" },
         "date": { "type": "string", "format": "date", "description": "Preferred appointment date" },
+        "time": { "type": "string", "description": "Preferred appointment time (hourly)" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp of creation" },
         "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"] }
       },
-      "required": ["userId", "userEmail", "fullName", "phoneNumber", "service", "date"]
+      "required": ["userId", "userEmail", "fullName", "phoneNumber", "service", "date", "time"]
     },
     "User": {
       "title": "User",
