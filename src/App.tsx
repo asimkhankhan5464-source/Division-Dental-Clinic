@@ -403,25 +403,25 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: (
           className="fixed inset-0 z-[200] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4"
         >
           <motion.div 
-            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+            initial={{ scale: 0.95, opacity: 0, y: 30 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 10 }}
-            className="bg-white w-full max-w-2xl p-8 md:p-12 shadow-2xl relative rounded-[2rem] overflow-hidden"
+            exit={{ scale: 0.95, opacity: 0, y: 30 }}
+            className="bg-white w-full max-w-2xl p-6 md:p-12 shadow-2xl relative rounded-[2rem] md:rounded-[3rem] overflow-hidden mx-4 max-h-[90vh] overflow-y-auto hide-scrollbar"
           >
             <button 
               onClick={onClose}
-              className="absolute top-8 right-8 text-slate-300 hover:text-slate-900 transition-colors p-2"
+              className="absolute top-6 right-6 md:top-8 md:right-8 text-slate-300 hover:text-slate-900 transition-colors p-2 z-20"
             >
-              <X className="w-8 h-8" />
+              <X className="w-6 h-6 md:w-8 md:w-8" />
             </button>
 
-            <div className="flex flex-col md:flex-row gap-12">
-              <div className="md:w-1/2">
-                <div className="w-12 h-12 border-2 border-brand-teal text-brand-teal flex items-center justify-center font-display text-2xl italic mb-8">D</div>
-                <h2 className="font-display text-4xl text-slate-900 mb-4 tracking-tight">
+            <div className="flex flex-col md:flex-row gap-8 md:gap-12 relative">
+              <div className="md:w-1/2 flex flex-col justify-center">
+                <div className="w-10 h-10 md:w-12 md:h-12 border-2 border-brand-teal text-brand-teal flex items-center justify-center font-display text-xl md:text-2xl italic mb-6 md:mb-8 bg-white">D</div>
+                <h2 className="font-display text-3xl md:text-4xl text-slate-900 mb-3 md:mb-4 tracking-tight leading-tight">
                   {authType === 'admin' ? 'Authorized Access' : (authType === 'login' ? 'Reserved Welcome' : 'Join the Studio')}
                 </h2>
-                <p className="text-slate-500 text-sm leading-relaxed mb-8">
+                <p className="text-slate-500 text-sm leading-relaxed mb-6 md:mb-8 font-light italic">
                   Experience a higher standard of clinical care in a curated environment designed for your serenity.
                 </p>
                 
@@ -441,7 +441,10 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: (
                     </button>
                   </div>
                   {authType === 'admin' ? (
-                    <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest text-center py-2">Clinical Administrator Portal</p>
+                    <div className="text-center py-2">
+                       <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest">Clinical Administrator Portal</p>
+                       <button onClick={() => setAuthType('login')} className="text-[9px] text-slate-400 underline mt-1">Return to Patient Login</button>
+                    </div>
                   ) : (
                     <button 
                       onClick={() => setAuthType('admin')}
@@ -453,46 +456,49 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: (
                 </div>
               </div>
 
-              <div className="md:w-1/2 pt-4 md:pt-0">
-                <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="md:w-1/2 pt-2 md:pt-0 border-t md:border-t-0 md:border-l border-slate-50 md:pl-12">
+                <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
                   {authType === 'signup' && (
                     <div>
-                      <label className="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2 ml-1">Full Name</label>
+                      <label className="block text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-1.5 md:mb-2 ml-1">Full Name</label>
                       <input 
                         type="text" 
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full bg-slate-50 border-slate-100 border p-4 text-sm rounded-2xl focus:bg-white focus:border-brand-teal outline-none transition-all"
+                        className="w-full bg-slate-50 border-slate-100 border p-3.5 md:p-4 text-sm rounded-xl md:rounded-2xl focus:bg-white focus:border-brand-teal outline-none transition-all placeholder:text-slate-300" 
+                        placeholder="e.g. Julian Henderson"
                       />
                     </div>
                   )}
                   <div>
-                    <label className="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2 ml-1">Email Address</label>
+                    <label className="block text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-1.5 md:mb-2 ml-1">Email Address</label>
                     <input 
                       type="email" 
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-slate-50 border-slate-100 border p-4 text-sm rounded-2xl focus:bg-white focus:border-brand-teal outline-none transition-all"
+                      className="w-full bg-slate-50 border-slate-100 border p-3.5 md:p-4 text-sm rounded-xl md:rounded-2xl focus:bg-white focus:border-brand-teal outline-none transition-all placeholder:text-slate-300"
+                      placeholder="name@email.com"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-2 ml-1">Password</label>
+                    <label className="block text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-1.5 md:mb-2 ml-1">Password</label>
                     <input 
                       type="password" 
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-slate-50 border-slate-100 border p-4 text-sm rounded-2xl focus:bg-white focus:border-brand-teal outline-none transition-all"
+                      className="w-full bg-slate-50 border-slate-100 border p-3.5 md:p-4 text-sm rounded-xl md:rounded-2xl focus:bg-white focus:border-brand-teal outline-none transition-all placeholder:text-slate-300"
+                      placeholder="••••••••"
                     />
                   </div>
 
-                  {error && <p className="text-red-500 text-[10px] uppercase font-bold tracking-widest text-center mt-2">{error}</p>}
+                  {error && <p className="text-red-500 text-[9px] md:text-[10px] uppercase font-bold tracking-widest text-center mt-2">{error}</p>}
 
                   <button 
                     disabled={isLoading}
-                    className="w-full bg-slate-900 text-white py-5 rounded-2xl text-[11px] uppercase tracking-widest font-bold hover:bg-brand-teal transition-all shadow-lg flex items-center justify-center"
+                    className="w-full bg-slate-900 text-white py-4 md:py-5 rounded-xl md:rounded-2xl text-[10px] md:text-[11px] uppercase tracking-widest font-bold hover:bg-brand-teal transition-all shadow-lg flex items-center justify-center active:scale-[0.98]"
                   >
                     {isLoading ? 'Authenticating...' : (authType === 'login' ? 'Sign In' : (authType === 'admin' ? 'Admin Login' : 'Create Account'))}
                   </button>
@@ -500,13 +506,13 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: (
                   {authType !== 'admin' && (
                     <div className="space-y-4">
                       <div className="relative">
-                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-                        <div className="relative flex justify-center text-[10px] uppercase tracking-widest font-bold"><span className="bg-white px-4 text-slate-300">or</span></div>
+                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-50"></div></div>
+                        <div className="relative flex justify-center text-[9px] uppercase tracking-widest font-bold"><span className="bg-white px-4 text-slate-300">or</span></div>
                       </div>
                       <button 
                         type="button"
                         onClick={handleGoogleLogin}
-                        className="w-full border border-slate-100 flex items-center justify-center gap-3 py-4 rounded-2xl text-[10px] uppercase tracking-widest font-bold text-slate-600 hover:bg-slate-50 transition-all"
+                        className="w-full border border-slate-100 flex items-center justify-center gap-3 py-3.5 md:py-4 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] uppercase tracking-widest font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-[0.98]"
                       >
                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4" alt="Google" />
                         Continue with Google
