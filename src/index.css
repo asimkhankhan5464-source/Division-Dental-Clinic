@@ -8,12 +8,25 @@
   --color-brand-accent: #c5a386; /* Warm beige/gold accent */
   --color-brand-soft: #fcfbf7; /* Off-white / Cream background */
   --color-brand-slate-border: #e2e8f0;
+  
+  --shadow-premium: 0 10px 40px -10px rgba(30, 58, 58, 0.1);
+  --shadow-inner-soft: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
-    @apply bg-[#fcfbf7]; /* Apply brand soft color */
+    @apply bg-brand-soft selection:bg-brand-accent/30 selection:text-brand-teal;
+  }
+  
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    @apply text-slate-800 leading-relaxed;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
   }
 }
 
@@ -25,6 +38,14 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20;
+  }
+  
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
