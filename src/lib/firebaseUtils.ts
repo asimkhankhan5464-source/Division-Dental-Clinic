@@ -153,11 +153,11 @@ export const createBooking = async (bookingData: any) => {
   if (!auth.currentUser) throw new Error('Authentication required');
   
   const payload = {
+    status: 'pending', // Default status
     ...bookingData,
     userId: auth.currentUser.uid,
     userEmail: auth.currentUser.email,
     createdAt: serverTimestamp(),
-    status: 'pending'
   };
   
   console.log('Creating booking with payload:', payload);
@@ -204,7 +204,7 @@ export const updateBookingStatus = async (bookingId: string, status: string) => 
   const path = `bookings/${bookingId}`;
   try {
     const docRef = doc(db, 'bookings', bookingId);
-    await updateDoc(docRef, { status, updatedAt: serverTimestamp() });
+    await setDoc(docRef, { status, updatedAt: serverTimestamp() }, { merge: true });
     return true;
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, path);

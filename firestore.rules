@@ -36,20 +36,7 @@ service cloud.firestore {
 
     // 2. Patient Bookings
     match /bookings/{bookingId} {
-      function isValidBooking(data) {
-        return data.fullName is string && 
-               data.phoneNumber is string && 
-               data.date is string && 
-               data.time is string;
-      }
-
-      allow create: if isSignedIn() && 
-                      (request.resource.data.userId == request.auth.uid || isAdmin()) &&
-                      isValidBooking(request.resource.data);
-      
-      allow list: if isSignedIn() && (isOwner(resource.data) || isAdmin());
-      allow get: if isSignedIn() && (isOwner(resource.data) || isAdmin());
-      allow update, delete: if isSignedIn() && (isOwner(resource.data) || isAdmin());
+      allow read, write: if isSignedIn();
     }
 
     // 3. System Connection

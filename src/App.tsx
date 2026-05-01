@@ -108,11 +108,12 @@ const AdminPortal = ({ user, isAdmin }: { user: FirebaseUser | null, isAdmin: bo
   };
 
   const handleStatusChange = async (id: string, newStatus: string) => {
+    console.log('Admin changing status:', { id, newStatus });
     try {
       await updateBookingStatus(id, newStatus);
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status: newStatus } : b));
     } catch (err) {
-      console.error(err);
+      console.error('handleStatusChange error:', err);
       alert('Failed to update status');
     }
   };
@@ -1068,7 +1069,9 @@ const BookingSection = ({ user, onBookingSuccess, onAuthRequired }: { user: Fire
       setIsLoadingSlots(true);
       try {
         const bookingsOnDate = await getBookingsByDate(formData.date);
-        const times = (bookingsOnDate || []).map((b: any) => b.time);
+        const times = (bookingsOnDate || [])
+          .filter((b: any) => b.status !== 'cancelled')
+          .map((b: any) => b.time);
         setOccupiedSlots(times);
       } catch (err) {
         console.error('Error fetching slots:', err);
@@ -1461,7 +1464,8 @@ const UserBookings = ({ user }: { user: FirebaseUser | null }) => {
   }, [user]);
 
   const handleCancel = async (id: string) => {
-    if (!confirm('Are you sure you want to cancel this appointment?')) return;
+    console.log('User requesting cancellation:', id);
+    // Removed confirm as it might be blocked in iframe
     
     const previousBookings = [...bookings];
     // Optimistic update: mark as cancelled instantly in UI
@@ -1469,11 +1473,21 @@ const UserBookings = ({ user }: { user: FirebaseUser | null }) => {
     setIsCancelling(id);
     
     try {
+      console.log('Calling updateBookingStatus for:', id);
       await updateBookingStatus(id, 'cancelled');
+      console.log('Cancellation successful for:', id);
+      setError('Appointment cancelled successfully.'); // Using error state for success flash
+      setTimeout(() => setError(null), 3000);
     } catch (err: any) {
       console.error('handleCancel error', err);
       setBookings(previousBookings); // Revert UI if server fails
-      alert('Failed to cancel appointment. Please try again.');
+      let msg = 'Failed to cancel appointment. Please try again.';
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed.error) msg = `Error: ${parsed.error}`;
+      } catch (e) {}
+      setError(msg);
+      setTimeout(() => setError(null), 5000);
     } finally {
       setIsCancelling(null);
     }
