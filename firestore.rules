@@ -15,8 +15,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == "asimkhankhan3236@gmail.com" ||
-        request.auth.token.email == "asimkhankhan5464@gmail.com"
+        request.auth.token.email == "asimmidadkhel@gmail.com"
       );
     }
 
@@ -36,7 +35,19 @@ service cloud.firestore {
 
     // 2. Patient Bookings
     match /bookings/{bookingId} {
-      allow read, write: if isSignedIn();
+      function isAdmin() {
+        return isSignedIn() && (
+          request.auth.token.email == 'asimmidadkhel@gmail.com'
+        );
+      }
+      function isOwner(data) {
+        return isSignedIn() && (data.userId == request.auth.uid || data.userEmail == request.auth.token.email);
+      }
+
+      allow create: if isSignedIn();
+      allow list, get: if isOwner(resource.data) || isAdmin();
+      allow update: if isOwner(resource.data) || isAdmin();
+      allow delete: if isAdmin();
     }
 
     // 3. System Connection

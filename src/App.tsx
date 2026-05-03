@@ -125,12 +125,26 @@ const AdminPortal = ({ user, isAdmin }: { user: FirebaseUser | null, isAdmin: bo
           <div className="w-16 h-16 border-2 border-brand-teal text-brand-teal flex items-center justify-center font-display text-4xl italic mx-auto mb-6">D</div>
           <h2 className="font-display text-3xl text-slate-900 mb-2">Access Denied</h2>
           <p className="text-slate-400 text-xs uppercase tracking-widest font-bold">Authorized Personnel Only</p>
-          <button 
-            onClick={() => window.location.hash = ''} 
-            className="mt-8 text-brand-teal font-black text-[10px] uppercase tracking-widest border-b border-brand-teal"
-          >
-            Back to Home
-          </button>
+          
+          <div className="flex flex-col gap-4 mt-8">
+            {!user && (
+              <button 
+                onClick={() => {
+                  const authBtn = document.querySelector('[data-signin-btn]') as HTMLButtonElement;
+                  if (authBtn) authBtn.click();
+                }}
+                className="bg-brand-teal text-white px-8 py-4 text-[10px] uppercase font-bold tracking-widest hover:bg-slate-900 transition-all"
+              >
+                Sign In to Continue
+              </button>
+            )}
+            <button 
+              onClick={() => window.location.hash = ''} 
+              className="text-brand-teal font-black text-[10px] uppercase tracking-widest border-b border-brand-teal mx-auto w-fit"
+            >
+              Back to Home
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -379,7 +393,15 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: (
       const result = await signInWithPopup(auth, provider);
       console.log('Google Login Success:', result.user.email);
       
-      onSuccess?.('login');
+      const adminEmails = ['asimmidadkhel@gmail.com'];
+      const isUserAdmin = adminEmails.includes(result.user.email || '');
+      
+      if (authType === 'admin' && !isUserAdmin) {
+        await auth.signOut();
+        throw new Error('This Google account is not authorized as an admin.');
+      }
+      
+      onSuccess?.(authType === 'admin' ? 'admin' : 'login');
       onClose();
     } catch (err: any) {
       console.error('Google Login Error:', err);
@@ -404,9 +426,10 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: (
     try {
       if (authType === 'login' || authType === 'admin') {
         await loginWithEmail(email, password);
-        if (authType === 'admin' && auth.currentUser?.email !== 'asimkhankhan3236@gmail.com') {
+        const adminEmails = ['asimmidadkhel@gmail.com'];
+        if (authType === 'admin' && !adminEmails.includes(auth.currentUser?.email || '')) {
           await auth.signOut();
-          throw new Error('Not an authorized admin account.');
+          throw new Error('This account is not authorized as an admin.');
         }
       } else {
         await signupWithEmail(email, password, name);
@@ -414,7 +437,12 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: (
       onSuccess?.(authType);
       onClose();
     } catch (err: any) {
-      setError(err.message);
+      console.error('Auth error:', err);
+      if (err.code === 'auth/invalid-credential') {
+        setError('Invalid email or password. If you haven\'t created an account yet, please use the "Sign Up" tab first.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -530,7 +558,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: (
                     {isLoading ? 'Authenticating...' : (authType === 'login' ? 'Sign In' : (authType === 'admin' ? 'Admin Login' : 'Create Account'))}
                   </button>
 
-                  {authType !== 'admin' && (
+                  {(authType !== 'admin' || true) && (
                     <div className="space-y-4">
                       <div className="relative">
                         <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-50"></div></div>
@@ -542,7 +570,7 @@ const AuthModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean, onClose: (
                         className="w-full border border-slate-100 flex items-center justify-center gap-3 py-3.5 md:py-4 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] uppercase tracking-widest font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-[0.98]"
                       >
                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-4 h-4" alt="Google" />
-                        Continue with Google
+                        {authType === 'admin' ? 'Login Admin with Google' : 'Continue with Google'}
                       </button>
                     </div>
                   )}
@@ -599,6 +627,11 @@ const Navbar = ({ user, isAdmin, onSignInClick }: { user: FirebaseUser | null, i
           <div className="flex items-center gap-6 ml-4">
             {user ? (
                <div className="flex items-center gap-6">
+                  {isAdmin && (
+                    <a href="#admin" className={`text-[11px] uppercase tracking-widest font-bold text-brand-teal hover:text-brand-accent transition-colors`}>
+                       Admin Portal
+                    </a>
+                  )}
                   <a href="#my-bookings" className={`text-[11px] uppercase tracking-widest font-bold hover:text-brand-accent transition-colors ${isScrolled ? 'text-slate-600' : 'text-slate-900'}`}>
                      My Dashboard
                   </a>
@@ -612,6 +645,7 @@ const Navbar = ({ user, isAdmin, onSignInClick }: { user: FirebaseUser | null, i
             ) : (
               <button 
                 onClick={onSignInClick}
+                data-signin-btn
                 className={`text-[11px] uppercase tracking-[0.2em] font-bold px-8 py-4 rounded-xl transition-all ${isScrolled ? 'bg-slate-900 text-white hover:bg-brand-teal' : 'bg-brand-teal text-white hover:bg-slate-900'}`}
               >
                 Sign In
@@ -1406,9 +1440,9 @@ const Footer = () => {
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
           <p>© 2024 Division Dental Clinic. All Rights Reserved.</p>
           <div className="flex gap-8">
-            <a href="#" className="hover:text-white">Privacy Policy</a>
-            <a href="#" className="hover:text-white">Terms of Service</a>
-            <a href="#admin" className="text-slate-800 hover:text-slate-700 transition-colors">Admin</a>
+            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+            <a href="#admin" className="text-slate-600 hover:text-slate-400 transition-colors">Admin</a>
           </div>
         </div>
       </div>
@@ -1623,7 +1657,7 @@ export default function App() {
   const [activeView, setActiveView] = useState<'home' | 'bookings' | 'admin'>('home');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const isAdmin = user?.email === 'asimkhankhan3236@gmail.com' || user?.email === 'asimkhankhan5464@gmail.com';
+  const isAdmin = user?.email === 'asimmidadkhel@gmail.com';
 
   useEffect(() => {
     testConnection();
